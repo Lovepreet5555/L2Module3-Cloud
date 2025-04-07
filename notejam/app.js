@@ -14,42 +14,50 @@ var LocalStrategy = require('passport-local').Strategy;
 var users = require('./routes/users');
 var pads = require('./routes/pads');
 var notes = require('./routes/notes');
-var settings = require('./settings');
-var async = require('async');
 
+console.log('📦 Loading settings...');
+var settings = require('./settings');
+console.log('🌍 Environment:', process.env.NODE_ENV);
+console.log('🛠️  DB Settings:', settings.db);
+console.log('🧩 DSN:', settings.dsn);
+
+var async = require('async');
 var app = express();
 
 // View engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 
+// Middleware
 app.use(favicon());
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded());
 app.use(expressValidator());
 app.use(cookieParser());
-app.use(session({cookie: { maxAge: 60000 }, secret: 'secret'}));
+app.use(session({ cookie: { maxAge: 60000 }, secret: 'secret' }));
 app.use(flash());
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // PostgreSQL DB configuration
-var { Client } = require('pg');
-var db = new Client(settings.db);
+const { Client } = require('pg');
+console.log('🧬 Connecting to PostgreSQL...');
 
-// db.connect(function(err) {
-//   if (err) throw err;
-//   console.log('Connected to PostgreSQL database');
-// });
-db.connect(function(err) {
-  if (err) throw err;
-  console.log('Connected to PostgreSQL database');
+const db = new Client(settings.db);
 
-  // Create Tables
+db.connect(function (err) {
+  if (err) {
+    console.error('❌ PostgreSQL connection failed:', err.stack);
+    process.exit(1); // Crash if DB fails
+  }
+
+  console.log('✅ Connected to PostgreSQL database');
+
+  // Create tables
   createTables(function () {
-    console.log('Database tables are ready');
+    console.log('🗃️  Database tables are ready');
   });
 });
 
@@ -64,6 +72,7 @@ function createTables(next) {
         );`,
         [],
         function () {
+          console.log('🧑‍💻 users table checked/created');
           callback(null);
         }
       );
@@ -77,6 +86,7 @@ function createTables(next) {
         );`,
         [],
         function () {
+          console.log('📒 pads table checked/created');
           callback(null);
         }
       );
@@ -94,42 +104,53 @@ function createTables(next) {
         );`,
         [],
         function () {
+          console.log('📝 notes table checked/created');
           callback(null);
         }
       );
     }
   }, function (err, results) {
+    if (err) {
+      console.error('❌ Error creating tables:', err);
+    }
     if (next) next();
   });
 }
 
+// ORM config
 orm.settings.set("instance.returnAllErrors", true);
 app.use(orm.express(settings.dsn, {
   define: function (db, models, next) {
+    console.log('📦 Loading ORM models...');
     db.load("./models", function (err) {
+      if (err) {
+        console.error('❌ Error loading ORM models:', err);
+        return next(err);
+      }
       models.User = db.models.users;
       models.Pad = db.models.pads;
       models.Note = db.models.notes;
+      console.log('✅ ORM models loaded');
       next();
     });
   }
 }));
 
-// Flash Messages configuration
-app.use(function(req, res, next){
+// Flash Messages
+app.use(function (req, res, next) {
   res.locals.flash_messages = {
-    'success': req.flash('success'),
-    'error': req.flash('error')
+    success: req.flash('success'),
+    error: req.flash('error')
   };
   next();
 });
 
-// Inject request object and user pads in view scope
-app.use(function(req, res, next){
+// Inject request + pads
+app.use(function (req, res, next) {
   res.locals.req = req;
 
   if (req.isAuthenticated()) {
-    req.user.getPads(function(i, pads) {
+    req.user.getPads(function (i, pads) {
       res.locals.pads = pads;
       next();
     });
@@ -138,149 +159,35 @@ app.use(function(req, res, next){
   }
 });
 
+// Routes
 app.use('/', users);
 app.use('/', pads);
 app.use('/', notes);
 
-/// Catch 404 and forward to error handler
-app.use(function(req, res, next) {
+// 404 handler
+app.use(function (req, res, next) {
   var err = new Error('Not Found');
   err.status = 404;
   next(err);
 });
 
-// Development error handler - will print stacktrace
+// Error handlers
 if (app.get('env') === 'development') {
-  app.use(function(err, req, res, next) {
-    res.status(err.status || 500);
-    res.render('error', {
+  app.use(function (err, req, res, next) {
+    console.error('⚠️ Error:', err);
+    res.status(err.status || 500).render('error', {
       message: err.message,
       error: err
     });
   });
 }
 
-// Production error handler - no stacktraces leaked to user
-app.use(function(err, req, res, next) {
-  res.status(err.status || 500);
-  res.render('error', {
+app.use(function (err, req, res, next) {
+  console.error('❗ Uncaught Error:', err.message);
+  res.status(err.status || 500).render('error', {
     message: err.message,
     error: {}
   });
 });
 
 module.exports = app;
-
-
-
-
-// var express = require('express');
-// var session = require('express-session');
-// var path = require('path');
-// var favicon = require('static-favicon');
-// var logger = require('morgan');
-// var cookieParser = require('cookie-parser');
-// var flash = require('connect-flash');
-// var bodyParser = require('body-parser');
-// var orm = require('orm');
-// var expressValidator = require('express-validator');
-// var passport = require('passport');
-// var LocalStrategy = require('passport-local').Strategy;
-
-// var users = require('./routes/users');
-// var pads = require('./routes/pads');
-// var notes = require('./routes/notes');
-// var settings = require('./settings')
-
-// var app = express();
-
-
-// // view engine setup
-// app.set('views', path.join(__dirname, 'views'));
-// app.set('view engine', 'jade');
-
-// app.use(favicon());
-// app.use(logger('dev'));
-// app.use(bodyParser.json());
-// app.use(bodyParser.urlencoded());
-// app.use(expressValidator());
-// app.use(cookieParser());
-// app.use(session({cookie: { maxAge: 60000 }, secret: 'secret'}));
-// app.use(flash());
-// app.use(passport.initialize());
-// app.use(passport.session());
-// app.use(express.static(path.join(__dirname, 'public')));
-
-// // DB configuration
-// var sqlite3 = require('sqlite3').verbose();
-// var db = new sqlite3.Database(settings.db);
-
-// orm.settings.set("instance.returnAllErrors", true);
-// app.use(orm.express(settings.dsn, {
-//   define: function (db, models, next) {
-//     db.load("./models", function (err) {
-//       models.User = db.models.users;
-//       models.Pad = db.models.pads;
-//       models.Note = db.models.notes;
-//       next();
-//     });
-//   }
-// }));
-
-// // Flash Messages configuration
-// app.use(function(req, res, next){
-//   res.locals.flash_messages = {
-//     'success': req.flash('success'),
-//     'error': req.flash('error')
-//   }
-//   next();
-// });
-
-// // Inject request object and user pads in view scope
-// app.use(function(req, res, next){
-//   res.locals.req = req;
-
-//   if (req.isAuthenticated()) {
-//     req.user.getPads(function(i, pads) {
-//       res.locals.pads = pads;
-//       next();
-//     });
-//   } else {
-//     next();
-//   }
-// });
-
-// app.use('/', users);
-// app.use('/', pads);
-// app.use('/', notes);
-
-// /// catch 404 and forward to error handler
-// app.use(function(req, res, next) {
-//   var err = new Error('Not Found');
-//   err.status = 404;
-//   next(err);
-// });
-
-// // development error handler
-// // will print stacktrace
-// if (app.get('env') === 'development') {
-//   app.use(function(err, req, res, next) {
-//     res.status(err.status || 500);
-//     res.render('error', {
-//       message: err.message,
-//       error: err
-//     });
-//   });
-// }
-
-// // production error handler
-// // no stacktraces leaked to user
-// app.use(function(err, req, res, next) {
-//   res.status(err.status || 500);
-//   res.render('error', {
-//     message: err.message,
-//     error: {}
-//   });
-// });
-
-// module.exports = app;

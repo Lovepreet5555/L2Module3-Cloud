@@ -1,19 +1,35 @@
-var settings = {
+const settings = {
   development: {
     db: {
-      host: 'db', // Use the service name defined in docker-compose.yml
-      port: 5432,
-      user: 'postgres',
-      password: 'password', // Ensure this matches the password in db/password.txt
-      database: 'notejam'
+      host: process.env.POSTGRES_HOST || 'db',
+      port: process.env.POSTGRES_PORT || 5432,
+      user: process.env.POSTGRES_USER || 'postgres',
+      password: process.env.POSTGRES_PASSWORD || 'password',
+      database: process.env.POSTGRES_DB || 'notejam'
     },
-    dsn: "postgres://postgres:password@db:5432/notejam" // Update the host to 'db'
+    dsn: `postgres://${process.env.POSTGRES_USER || 'postgres'}:${process.env.POSTGRES_PASSWORD || 'password'}@${process.env.POSTGRES_HOST || 'db'}:${process.env.POSTGRES_PORT || 5432}/${process.env.POSTGRES_DB || 'notejam'}`
+  },
+
+  production: {
+    db: {
+      host: process.env.POSTGRES_HOST || 'db',
+      port: process.env.POSTGRES_PORT || 5432,
+      user: process.env.POSTGRES_USER || 'postgres',
+      password: process.env.POSTGRES_PASSWORD || 'password',
+      database: process.env.POSTGRES_DB || 'notejam'
+    },
+    dsn: `postgres://${process.env.POSTGRES_USER || 'postgres'}:${process.env.POSTGRES_PASSWORD || 'password'}@${process.env.POSTGRES_HOST || 'db'}:${process.env.POSTGRES_PORT || 5432}/${process.env.POSTGRES_DB || 'notejam'}`
   }
 };
 
-var env = process.env.NODE_ENV;
-if (!env) {
+let env = process.env.NODE_ENV || 'development';
+
+if (!settings[env]) {
+  console.warn(`❌ Unknown NODE_ENV "${env}". Falling back to 'development'.`);
   env = 'development';
 }
-module.exports = settings[env];
 
+console.log('🛠️ NODE_ENV:', env);
+console.log('📦 Loaded DB Config:', settings[env].db);
+
+module.exports = settings[env];

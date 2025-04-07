@@ -1,0 +1,24 @@
+
+kubectl port-forward service/notejam-service 3000:3000 -n notejam
+
+kubectrollout restart deployment notejam-deployment -n notejam
+
+kubectl apply -f /home/workshop1/Desktop/cloud/notejam/k8s/ingress.yaml
+
+kubectl get namespace ingress-nginx
+
+kubectl get all -n notejam
+
+kubectl exec -it postgres-0 -n notejam -- /bin/sh
+psql -h postgres -U postgres -d notejam
+SELECT 1;
+docker build -t lovepreet7452/notejam-server:latest .
+docker push lovepreet7452/notejam-server:latest
+
+kubectl exec -it notejam-deployment-9d4f5f976-gqk6m  -n notejam -- /bin/sh
+
+kubectl get all -n notejam
+
+kubectl get ingress -n notejam
+kubectl get pv
+kubectl get pvc -n notejam
