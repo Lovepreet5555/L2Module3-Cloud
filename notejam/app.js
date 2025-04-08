@@ -15,11 +15,11 @@ var users = require('./routes/users');
 var pads = require('./routes/pads');
 var notes = require('./routes/notes');
 
-console.log('📦 Loading settings...');
+console.log('Loading settings...');
 var settings = require('./settings');
-console.log('🌍 Environment:', process.env.NODE_ENV);
-console.log('🛠️  DB Settings:', settings.db);
-console.log('🧩 DSN:', settings.dsn);
+console.log('Environment:', process.env.NODE_ENV);
+console.log('DB Settings:', settings.db);
+console.log('DSN:', settings.dsn);
 
 var async = require('async');
 var app = express();
@@ -43,21 +43,21 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // PostgreSQL DB configuration
 const { Client } = require('pg');
-console.log('🧬 Connecting to PostgreSQL...');
+console.log('Connecting to PostgreSQL...');
 
 const db = new Client(settings.db);
 
 db.connect(function (err) {
   if (err) {
-    console.error('❌ PostgreSQL connection failed:', err.stack);
+    console.error('PostgreSQL connection failed:', err.stack);
     process.exit(1); // Crash if DB fails
   }
 
-  console.log('✅ Connected to PostgreSQL database');
+  console.log('Connected to PostgreSQL database');
 
   // Create tables
   createTables(function () {
-    console.log('🗃️  Database tables are ready');
+    console.log('Database tables are ready');
   });
 });
 
@@ -72,7 +72,7 @@ function createTables(next) {
         );`,
         [],
         function () {
-          console.log('🧑‍💻 users table checked/created');
+          console.log('users table checked/created');
           callback(null);
         }
       );
@@ -86,7 +86,7 @@ function createTables(next) {
         );`,
         [],
         function () {
-          console.log('📒 pads table checked/created');
+          console.log('pads table checked/created');
           callback(null);
         }
       );
@@ -104,14 +104,14 @@ function createTables(next) {
         );`,
         [],
         function () {
-          console.log('📝 notes table checked/created');
+          console.log('notes table checked/created');
           callback(null);
         }
       );
     }
   }, function (err, results) {
     if (err) {
-      console.error('❌ Error creating tables:', err);
+      console.error('Error creating tables:', err);
     }
     if (next) next();
   });
@@ -121,16 +121,16 @@ function createTables(next) {
 orm.settings.set("instance.returnAllErrors", true);
 app.use(orm.express(settings.dsn, {
   define: function (db, models, next) {
-    console.log('📦 Loading ORM models...');
+    console.log('Loading ORM models...');
     db.load("./models", function (err) {
       if (err) {
-        console.error('❌ Error loading ORM models:', err);
+        console.error('Error loading ORM models:', err);
         return next(err);
       }
       models.User = db.models.users;
       models.Pad = db.models.pads;
       models.Note = db.models.notes;
-      console.log('✅ ORM models loaded');
+      console.log('ORM models loaded');
       next();
     });
   }
@@ -174,7 +174,7 @@ app.use(function (req, res, next) {
 // Error handlers
 if (app.get('env') === 'development') {
   app.use(function (err, req, res, next) {
-    console.error('⚠️ Error:', err);
+    console.error('Error:', err);
     res.status(err.status || 500).render('error', {
       message: err.message,
       error: err
@@ -183,7 +183,7 @@ if (app.get('env') === 'development') {
 }
 
 app.use(function (err, req, res, next) {
-  console.error('❗ Uncaught Error:', err.message);
+  console.error('Uncaught Error:', err.message);
   res.status(err.status || 500).render('error', {
     message: err.message,
     error: {}

@@ -25,11 +25,11 @@ const settings = {
 let env = process.env.NODE_ENV || 'development';
 
 if (!settings[env]) {
-  console.warn(`❌ Unknown NODE_ENV "${env}". Falling back to 'development'.`);
+  console.warn(`Unknown NODE_ENV "${env}". Falling back to 'development'.`);
   env = 'development';
 }
 
-console.log('🛠️ NODE_ENV:', env);
-console.log('📦 Loaded DB Config:', settings[env].db);
+console.log('NODE_ENV:', env);
+console.log('Loaded DB Config:', settings[env].db);
 
 module.exports = settings[env];

@@ -4,6 +4,7 @@ metadata:
   name: notejam-ingress
   namespace: notejam
 spec:
+  ingressClassName: nginx
   rules:
   - host: notejam.local
     http:

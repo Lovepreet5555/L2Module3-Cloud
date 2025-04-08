@@ -22,3 +22,12 @@ kubectl get all -n notejam
 kubectl get ingress -n notejam
 kubectl get pv
 kubectl get pvc -n notejam
+
+
+kubectl create token dashboard-admin-sa -n kubernetes-dashboard
+kubectl proxy
+http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
+
+
+curl http://notejam.local
+curl http://10.103.214.56:3000
